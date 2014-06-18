@@ -1,4 +1,4 @@
 StackAttack
 ===========
 
-And android game loosely based on CrackAttack!
+An android game loosely based on CrackAttack!
