@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+        <PreferenceCategory android:title="General Settings">
+                <CheckBoxPreference
+                        android:title="Sound"
+                        android:defaultValue="true"
+                        android:summary=""
+                        android:key="soundEffects" />
+                <CheckBoxPreference
+                        android:title="Show FPS"
+                        android:defaultValue="false"
+                        android:summary=""
+                        android:key="showFPS" />
+        </PreferenceCategory>
+        <PreferenceCategory android:title="Experimental Options">
+                <CheckBoxPreference
+                        android:title="Woozy Mode"
+                        android:defaultValue="false"
+                        android:summary="I'll have two whiskey sours, please..."
+                        android:key="woozyMode" />
+        </PreferenceCategory>
+</PreferenceScreen>

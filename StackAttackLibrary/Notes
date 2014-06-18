@@ -1,0 +1,450 @@
+#####################################################
+
+You can't force people, you must tempt them.
+
+#####################################################
+
+Board Flip issues:
+
+flipping row on deck flickers for one frame (upon start)
+
+Flip Board Timer, dont allow unless time has passed (1 sec?)
+
+Board settles upsidedown off by one row. (flip back and forth on a full board).. related to board increment reference
+
+========================================================================================================================
+
+orientation, tilt board via accel? Where will i use this? How will it help?
+
+Change renderer to not redraw on stale information (via GLUpdater timestamp)
+
+Add general animation pause??
+
+========================================================================================================================
+
+BUGS:
+
+	Settle-Dropblock race condition, leaves drawable above the virtal block
+
+	Generate Garbage not placing blocks in the right spot. Check methods for correct column placement
+
+X	After a long time of playing, the bottom of the board moves up a little at a time. Seems to be a problem determining the block length?
+
+	Race condition: drawable and grid location are out of sync, for an instant (flicker on board increment). 
+
+	End of game pause timer not working when melting occurs (keeps counting?)
+
+	Finger down is a bad event for invalidating the score multiplier... get another one...
+
+X?	Generate garbage moves board even when no garbage was generated (board was full)
+	
+	Garbage Blocks drop from below? need new equation for dropping.... no spring!
+	
+	Garbage block wrapper normals not right... fix for normal lighting!
+		
+	Swap around corner of garbage works even though there is not space
+	
+	
+
+
+========================================================================================================================
+
+FEATURES:
+
+	Moving light source.... would be awesome
+
+	END OF LEVEL/GAME: make a given match pattern / color sequence to destroy the current board (only one of multiple). then level up
+
+	Twist game board while destroy board animation is happeneing :) (awesome)
+
+X	Pick up block , wobble back and forth
+
+X	Melting block memebers shoudl buldge bigger than 1.0 and go back down to 1.0
+
+	Increase block mesh count, determine if the lighting can be improved
+
+X	HOW TO ENSURE SWAP BLOCK TRANSACTION???? SETTLE-SWAP-DELETE-INCREMENT syncing
+X	... "synchronized methods" for most board transactions
+
+	Easy medium, hard: game play will be a little different for each (pause on match, hold board iteration on pickup     vs.   not :)   )
+
+	Generate board sized based on screen resolution... a block souldn't be smaller than YxY pixels or bigger than... 
+
+	Flip Board
+
+	Mind f* rule: reverse board (play from behind)
+
+	Multi-Layer Board?
+
+	special blocks
+	
+X	Entire board shakes like spring when garbage is dropped! (like real crack attack)
+
+========================================================================================================================
+
+General Idea:
+	Various modes of playing (infinite, leveled, bonus, insane, easy-med-hard...) ; like firefight vs multiplayer vs custom game
+	Implement playable game for one person (level up & termination of game)
+	Add multiplayer support
+X	Add multiple boards
+	Add flipping boards
+	EOG countdown timer
+
+========================================================================================================================
+
+MENUS:   See google docs
+
+========================================================================================================================
+
+
+implement:
+X	row on deck + lock before incrementing board 					...		lock not needed
+X	Add row to bottom of board, getRow() still works				...		no action
+X	increment row speed pickups (every min or so / over X rows)???	...		Every 30 seconds
+X	game over timing & destruction
+
+X	...then groups
+X	Garbage blocks
+X	Settling Garbage!
+X	Matching + Animation
+X	Destroying garbage (gracefully): make inner blocks invisible until the garbage melts
+X	Matching next to garbage
+X	Scoring: matches, multipliers, combos  (no board, just debug)
+X	Garbage Generation based on block matching, not iterations (once at random time between 20 & 60 seconds, also based on cumulative settle score greater than 3)
+		Block matches above 3 blocks = # blocks matches (minus the base of 3 blocks) Times current multiplier
+		General Match = 0.1 gen points
+		At random time between 20 & 60 seconds: Garbage Generation Event:
+			Add a single garbage point (for time passing)
+			Check if above X total points, if so... generate. Otherwise wait.
+	
+X	Moving block should never trigger settle when settle is disabled
+
+X?	Settle Bugs:
+X?		- Random groups don't settle properly (members become astray). BECAUSE: garbage members are colocating in overlapped positions
+X		- melting adjacent groups causes last group to get settled separately (should all settle together)
+X		HELP: Implement game.eventlog & game.err. These should be two panes (left & right). event shows major board events increment, pause resume, swap, settle.
+X				game.err should be for watched parts (settle errors, swap errors)
+X		- Try Catch around matching/deleting, add to game.err. Sometimes after a match, the block is still there!		
+X			IDEA: These are not settle bugs, I have problems syncing delete block. I either keep the drawable or the grid element. or they get out of sync (pos)
+X			GENERATE garbage is causing these issues!
+							
+	Garbage should stack above board? can't! different interface
+		Instead, upon a failed garbage generation, another "immediateGenQueue" points should be incremented. If this is above 0, the end of game countdown
+		should be started. As soon as the garbage can be generated, it should be (continuously emptying the queue)
+		
+		or 
+		
+		Garbage stacks in Z-space
+		
+X	Grey Garbage vs. Red Garbage. Red transmits melting, Grey Doesn't.
+X	Check for match on block swap (checking the blocks swapped and adjacent colors, growing outwards). This will implements a realtime matching (say when
+		there is melting so a settle cannot be triggered but the user makes a manual match in the meantime. This makes the manual match realtime instead
+		of waiting for a settle).
+	
+X	Why are groups falling out of order... they should be staggered. ... (fixed programatic delay)
+	
+X	Make "SettleBelowRow" for fixing melting while the player continues to play below the melting...
+X		INSTEAD: implement "freeze" block (group?), so it cannot be settled anywhere. ANything melting should be frozen. The board will always be settled
+	
+X	Delete group membership for melting blocks & trigger interactable upon NEXT SETTLE? Keeps groups from settling out of sync and users from 
+X		moving newly melted blocks. Add any groups to get stripped to a list, upon settle, strip groups first (not in block update)
+
+
+NO	( [enable this from the activity if you want...]
+		X	Re-introduce board flipping?
+		X		Augment GenerateGarbage()
+		X		Augment RelocateROD()
+		X		Augment AnimationBroker: queueAnimation: SpawnROWOnDeck?
+		X		Augment Animation: SpawnROWOnDeck?
+	)
+
+	Main Menu:
+X		Vertical Board orientation:	
+X			Pause game via menu button, move 90 in rotation upwards
+X			BUG: as board moves up, so does the center reference, this needs to be corrected
+			
+			TexFont: 	NO	Change to print() instead of printAt()
+						X	Write PrintLeft() & PrintRight()
+						NO	SetCurser() on ScoreBoard position change
+							Try Different Fonts
+			
+			ScoreBoard:	X	Pickup
+						X	Drag (follow)
+						X	Pause
+						X	Lift (roll up)
+						NO	Animation (Use Broker!)
+						X	Global Y Offset (For text & backdrop [& menu])
+							Menu???
+							Multi Menu
+		
+
+Bug fixing time!
+X			flash of in-game menu on first drop down.
+			Blocks jitter on drop/swap from previous location and transport to the new location (upon drop)?
+?Better?	menu fps is 47 :(
+			first app start or next game restart is jittery/slow, though fps seems fine... what's going on?
+				First run: allocation, exit does not guarentee end of process. It may be reused!
+				HOW DO I PREALLOCATE?
+X			No ingame pause menu upon pressing home button then entering the app again
+		
+		
+X		Scale fonts
+		
+X		On Invalid move = vibrate motor, flash block/background, shake block "no" fashion
+		
+X		Bug: quickly swap between two boards many times (or immediatly at start of game)... race condition: board flips vertically?? (knife point to screen/user)
+		
+X		Transformer Prime nonsense? any ideas?
+X			ScoreBar: Proportion of rowxcol to empty space at top is larger than the block used to fill space..... so there is only half a score board
+X			No GL11Ext? ... Nope, GL10 lighting not always supported with GL11Ext, turn off lighting when drawing HUD
+
+X		Text							(orientation sensitive)
+X		Score Board!!!!!				(orientation sensitive)
+		
+		Implement: 
+		X	menu, 
+		X	sub menus, 
+			toggle buttons, 
+			drop downs?, 
+		X	number/value rollers + manipulators
+
+		
+X		Encapsulate gameplay & configurable items (no static-finals or whatnot)
+		
+		Then introduce configurable items:
+	
+X			Modes of play: infinite, leveled (timed per level) --see google doc
+No			Change background color every once in a while?
+	
+X			Difficulty
+		
+		Finalize top banner with score & per mode play
+		
+X		BUG: Null Pointer Exception on Match of 6 (3, in 2 columns, next to one another)
+X		BUG: Large resolution Screens: fonts have 1 PX of another letter!
+X		BUG: two finger board manipulation should be disabled when on menus
+X		BUG: After menu outro, the menu may show up again for a frame (at detent position) then vanish
+X		!!!BUG: matching/dissapearing blocks take too much time to vanish! Need to make certian the user is not WAITING to play on the board in that spot!		
+X		BUG: Fix dragging blocks around corners (mindful of corners I can't get to)
+X		BUG: wobble blocks disappear after getting off of the last row (drop down and gone? but still there) !
+X		BUG: End of game timer sometimes does not release after clearing top row
+X		BUG: match to make room on the board to increment row does not work!
+X			matching blocks should'nd be counted in the top row (for isTopRowEmpty() in board)		
+X		BUG: dont allow the user to go to boards that dont exist!		
+X		BUG: Row increment: board to board it is not synced! causes board 0 to "skip" a row when adding the ROD to the board.
+X		BUG: after a while of play, there is a Y offset that slowly moves up...
+			Magic Solution: Board Manager; draw(); Line 961: scratchYOffset = mCurrentGLYOffset + (game.world.mGLBlockLength*0.9917f)*mCurrentGlobalRowIndex;
+X		BUG: pause end of game timer upon melting garbage...
+X		BUG: Settle still a little qwerky: sometimes (very very rarely) a block jumps up several positions
+				Swap and Settle needed to cancel one anothers animations.
+X		BUG: bonus block board progression resume overrides melting garbage board progression resume (should not happen)
+X		BUG: reset the multiplier not upon interaction, but upon another match check that is unsuccessful (after match check occurs on event)
+		Who Cares: BUG: should widget layer show up on every board in a duplicate fashion?
+X		BUG: mutiple boards: when a bonus block is processing, then you switch to another board, you can keep the game artificaially paused
+X		BUG: Pause game does not pause EOG timer
+			Solution: Added locking to timers		
+X		BUG: lock blocks that are mmatching due to bonus block match
+X		BUG:  you make a T with 5 blocks you get 6 points
+				Solution: impolemented hash set in coord()
+X		BUG: Random Bomb / Color Bomb Bonus Blocks dont count towards largest match
+			Decision: they should count! let the user use it strategically!
+?		BUG: race condition with match + swap can leave a block in the grid but not in the block list
+X		BUG: when upsidedown and increment board, goingn back to normal does not compensate for globalRowCounter. next increment upon normal overlays rows by -1
+			Decision: upside down taken out	
+X		BUG: Quit game button should skip game over sign.		
+?		BUG: EOG Timer will not pause upon PauseGame when induced by another board
+			Fixed with fake primary thread? (really secondary)
+?		BUG: EOG timer does not re-check/resset when some blocks (bonus?) are done matching? especially when switchingn to another board. OR PAUSE BOARD PROGRESSION
+			Fixed with fake primary thread? (really secondary)
+?		BUG: too many points added on insane (and hard?).... maybe adding multiple boards?
+			After game state tweak... gone?
+?		BUG: matches should be smart to check contiguous blocks multiplier for statistics (compare against real crack attack to see what is displayed)
+			Idea: event vs timed settle events.... what about per column?   <-- Tried that... did this cause any more bugs? dunno!		
+?		BUG: sometimes garbage is not dropped but there is still a board sprin triggered?
+			Not found! Maybe it was being generated on an adjacet board?		
+X		Realtime Score & board level reporting/syncing
+X		Statistics collection (see google docs "CA menu" ; end game menu)
+X		Game over reporting board (then back to main menu?)
+X			Score + Multiplier = Final Score (Watch it grow)
+X		Menu Back Button (built in back button)
+X		Font sizes: add another per-instance scale factor
+X		Difficulty + Mode intervals for end of game duraiton for race against the clock!
+NO		When paused, show game type + difficulty
+X		Floating Numbers: 
+X			x4, 
+X			Game Over, 
+X			3...2...1...GO!
+X		3D Fonts: http://www.codehead.co.uk/blog/?p=298
+X			Front plane object: can spawn 3d font objects (on top of score board) ("widgetlayer" for 3d fonts and other objects; stars and whatnot)
+X			may or may not follow board progression
+X			motion driver : animation broker
+X			widgetlayer member objects get deleted upon: 
+X				the completion of a single animation,
+				a call to outro(),
+				an event 
+X		Bonus Blocks?
+X			Row Bomb
+X			Random Bomb
+X			Color Bomb
+X			Drunk
+Bug?		Upside Down
+X			Shuffle
+Dont Need 	Bonus Area
+NO		Custom Game allowing all options (including # of boards, so difficulty determines minimum value)
+X		Side Board Indicators	
+X		BUG: The "Play again" resets the game mode & difficulty :(
+X		BUG: When game starts (Difficulty: Insane)... there is a delay with the start of the game.... 
+			Put back the start of game logic and try again... That was it!
+X		BUG: EOG stats menu, hit home, go back in.... fog screen is displaced! (as if in middle of game & paused)
+X		BUG: null pointer exception: after game over and end of game menu just appears, hit HOME. then enter game again, then quit game.... destroyBoard() NPE
+			Put back the start of game logic and try again...	Yup, that was it 
+X		BUG: Home button does not pause game before exiting.
+?		BUG: After a phone call, resume does not pause game and negate timers.... can i do this? no
+X?X		BUG: hist HOME after end of game and go back into stack attack... end of game stats page should still be there!
+			Put back the start of game logic and try again... Nope, not it :(
+			Drag drop section down upon (just before) game over.... It will go to the main menu! dont do this!			
+X		BUG: Swap screen just at end of game does not return to center board :(		
+X		BUG: stack attack logo offset by the top bar height when hitting home then reentering the app
+				solution: static menu background built the height of the bar into the pic scale height twice			
+X		FEATURE: Show Stars next to each stat, indicating whether it's good or bad......
+X					+ Stars for overall stats... USE EXCEL FOR THIS... FIGURE OUT WHAT TO DO... NEED DATA!
+NO		BUG: scale texute by screen size (for GL stripe obj)
+X		BUG: fix single matches to not include bonus block matches		
+X		BUG: HOME button on end of game does not work right:
+			X	BUG: end of game DO NOT WAIT FOR STATS, hit home, enter game, hit main menu. GAME ENDS AGAIN!
+			X	BUG: end of game + wait for stats, hit home, enter game, MULTIPLIER GET APPLIED AGAIN!
+			X	BUG: is board being fully processed? making the FPS go down??????
+			X	BUG: EOG called multiple times
+			X	BUG: Fog screen resets position too often
+			X	BUG: Race against the clock: end game, main menu, singel player, start game.... THE BLOCKS START FROM THE TOP
+X		FEATURE: Show off all of the boards before starting the game (pan the virtual shape)
+X		BUG: race against the clock... top of the board EOG is not triggering!
+			X	make it like a fruit ninja.... 90 seconds, get as may points as possible. 
+			X	Top of theh board makes all points you get NOT COUNT.... 
+			X	EOG Timer last 10 seconds not very apparent!!!! make the banner change!!!
+NO		BUG: top of screen block colors are too washed out? tweak the lighting...
+				Or not?	
+...		When about to die:
+X			the score board text should outro() and a "Watch out!" should flash and animate instead. After a save or end of game, the score should be shown again
+NO			point the the board in trouble
+NO		Global Rotation Indicator (a small cube in the corner?) Shows which screen you have rotated to (relative to what boards are available)
+X		FIX: BLUE BLOCK BELOW LOGO (LEFT) on main menu	
+X		FIX: Replace SA icon for one with more lines like a hypercube
+X		Options (Android Preferences) Page:
+X			Sound
+X			Show FPS				
+X		REMOVE FPS, replace with debug switch?
+X		BUG: Edge of menu shows up on the left side on outro			
+X		Implement Last 3 Stars
+X		Woozy Mode Forever!
+X			multiplier base moves to 2!!!
+NO		IMPROVE: add texture to side board indicators? (remember, it's just a png)
+				It scales in both directions... so too long in the Y dir
+NO		Change: Add halo effect to logo & icon
+Kinda	IMPROVEMENT: MOVE ALL IMAGE LOADING INTO A MANAGER so it doesn't have to be done in realtime (no gc!)
+X		CHANGE: Game over text should continue to swing out instead of going back to 0 deg (go to 180 instead)
+X		TUTORIAL: when trying to move up and down, text shows up saying you cant do that! (during the whole tutorial)
+NO		IMPROVE: upon start, do NO animations! improve performance maybe?
+NoRoom	IMPROVE: Find Icon to put on the ScoreBanner to show you can drag it down....
+X		BUG: tutorial shouldn't be able to pause
+X		BUG: hit home when in tutorial
+				Solution: to back to main menu when in tutorial
+X		TWEAK: Shorten GLButton click event: down to 500			
+X		TWEAK: Shorten block match dead time (should settle sooner too!): down by another 100-200 ms
+X		BUG: If on top of board, multiplier does not reset????		
+???		BUG: Race against the clock, sometimes EOG stats menu wont show up.
+				Solution: cannot reproduce after several versions later
+X		BUG: RATC, upon second play of game, EOG count down occurs			
+X		BUG: make GameMode & Game Difficulty Tan & not clickable
+No		---Implement ads
+No		Where will ads go? where board is when paused. Also in the middle of the score banner?
+No		Take out bottom row of board, with "Dont want this? Buy it!"		
+X		--- Implement Tutorial
+X		BUG: Bonus Bomb upon EOG count down does not clear				
+				I THINK IT IS FIXED
+X		IMPROVE: attach volume up to go to MUSIC action, init to 60% vol
+X		--- About Page - Use default Dialog
+X		--- Loading Screen
+X		ENHANCE: ratc, should the matching & melting be quicker? it currently hinders player mobility				
+X		BUG: tutorial font height not right. removed hard coded feature in getVerticalPos()
+X		ENHANCE: glow and pulse tutorial "next" buttons		
+X		IMPLEMENT: free version, 100 point screen, buy me!
+				Done: INSTEAD:... play to 100 points... then game over shows with a buy me button	
+X		FIX: Stats too hard on normal!!!
+		
+		
+		FIX: Tutorial top arrow overlaps banner
+		FIX: add 'jostle' to color shimmering buttons
+		FIX: EOG star stats show in large screen resolutions: temp fix in place, make relative to scaled star height (so it is as close to the edge as possible)
+		FIX: Tutorial "~" has two pixels underneith it
+		FIX: too many horizontal matches on spawn
+		FIX: HTC opengl 11 not drawn on top
+		ENHANCE: race against the clock needs to speed up over time (SOONER)
+
+		BUG: color of side bar indicator resets to green upon evey color change ...
+			When at the top of the board is full on 1, while on 3, then switch to 2. The indicator never gets to swap from original color
+			Or when transitioning too fast?
+
+		BUG: Settle still a little qwerky: a garbage block doesn't settle right... RELATED TO Swapping under a settling block!
+			Cannot lock the board during settling, that would mean picking up a block could be blocked!
+		
+		BUG: the active block that is not dropped (event not fired) will still be picked up after a match... making the increment board fail
+		
+		BUG: Cant reproduce: crash just before game over... is this a gl null ref? dialog null ref?
+		
+		BUG: marsellie: unsettled block from (garbage blocks?) _______ blocks the player from moving blocks.
+		
+		BUG: blocks from melted garbage settling into a flat row of blocks. (but the grid has settled corretly). You can move your finger accross the right area and they get reset to the correct position. 
+		
+		FEATURE: Stats screen at pause game should be locked to the edge of the drop section?
+		
+		FEATURE: after a long time with a nearly empty board, and no interaction, display the "more blocks" hint
+		
+		ENHANCEMENT: change the circles to finger prints.
+		
+		PERFORMANCE: too much work in the main thread during initialization
+		
+X		LAST: make blocks inside garbage 0 size!
+
+		
+		
+		--- Sounds: ***Edgey but soft****
+		X	Menu Button / Roller Clicks
+			???Start of Game: 3...2...1...Go!
+		X	Pickup Block
+		X	Drop Block
+			Match Blocks
+			Melt Garbage
+			???EOG Countdown
+			Bonus Block Match
+
+
+		--- Options:
+			Donate (Paypal)
+			Fix Wording of existing options...
+
+
+		
+		FIX FIX FIX: Performance: minimize GCONCURRENT log entries (cause of 55fps every once in a while)
+		FIX FIX FIX:      This may mean fix settle to be less of a hog. (figure another way) or trim it (less objects from java 'collections')
+		HELP: add update thread FPS equivelent		
+		FIX: Use string builders instead of string concat
+
+
+	
+LATER RELEASES (NOT THIS [FIRST] RELEASE)
+=================================	
+GL2	Lighting. Multiple source lights.
+Textures / Materials
+Networking & Multiplayer: http://www.google.com/events/io/2009/sessions/CodingLifeBatteryLife.html
+Bonus Blocks:
+	Bonus Area
+???Bonus block Textures
+FEATURE: Share scores on facebook/Google plus/etc.
+FEATURE: high scores page
+Experimental Option: Gyro/Compass Mode (psycho mode)
+Experimental Option: Upside Down Bonus Block		
+
+ENHANCE: tutorial needs after-actions to display post acton text.
+ENHANCE: should be able to tell what kind of game you are playing (classic vs ratc) based on simple visual
+

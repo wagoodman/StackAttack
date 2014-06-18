@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name_free">Stack Attack! (Lite)</string>
+    <string name="app_name">Stack Attack!</string>
+    <string name="loading_content">…Loading…</string>
+</resources>
